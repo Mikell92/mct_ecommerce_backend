@@ -5,6 +5,9 @@ import com.muebleria.mctecommercebackend.model.User;
 import com.muebleria.mctecommercebackend.service.UserService;
 import jakarta.validation.Valid; // Importa para habilitar las validaciones en los DTOs
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // Importar Page
+import org.springframework.data.domain.Pageable; // Importar Pageable
+import org.springframework.data.web.PageableDefault; // Importar PageableDefault para valores por defecto
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,9 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler; // Para manejo 
 import org.springframework.web.bind.annotation.ResponseStatus; // Para manejar excepciones
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController // Indica que esta clase es un controlador REST de Spring
 @RequestMapping("/api/users") // Define la ruta base para todos los endpoints en este controlador
@@ -74,18 +75,29 @@ public class UserController {
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND)); // Si no se encuentra, retorna 404 Not Found
     }
 
-    // Endpoint para obtener todos los usuarios
-    // Solo los usuarios con rol 'ADMIN' pueden listar todos los usuarios
-    // GET: /api/users
+    /**
+     * **Modificado:** Endpoint para obtener todos los usuarios paginados.
+     * Permite los roles 'ADMIN'.
+     *
+     * @param pageable Objeto Pageable inyectado automáticamente por Spring,
+     * se puede configurar con parámetros como `?page=0&size=10&sort=username,asc`.
+     * `@PageableDefault` permite definir valores por defecto.
+     * @return ResponseEntity con una Page de UserDTOs y estado 200 OK.
+     */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<UserDTO>> getAllUsers() {
-        List<User> users = userService.findAllUsers();
-        // Mapea la lista de entidades User a una lista de UserDTOs para la respuesta
-        List<UserDTO> userDTOs = users.stream()
-                .map(user -> new UserDTO(user.getUserId(), user.getUsername(), null, user.getRole(), user.getIsDeleted()))
-                .collect(Collectors.toList());
-        return new ResponseEntity<>(userDTOs, HttpStatus.OK); // Retorna 200 OK
+    public ResponseEntity<Page<UserDTO>> getAllUsers(@PageableDefault(size = 10, sort = "username") Pageable pageable) {
+        Page<User> usersPage = userService.findAllUsers(pageable);
+
+        // Mapea la Page de entidades User a una Page de UserDTOs
+        Page<UserDTO> userDTOsPage = usersPage.map(user -> new UserDTO(
+                user.getUserId(),
+                user.getUsername(),
+                null, // Contraseña no se expone
+                user.getRole(),
+                user.getIsDeleted()
+        ));
+        return new ResponseEntity<>(userDTOsPage, HttpStatus.OK);
     }
 
     // Endpoint para actualizar un usuario existente

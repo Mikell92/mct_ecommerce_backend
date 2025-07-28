@@ -7,6 +7,9 @@ import com.muebleria.mctecommercebackend.repository.UserRepository;
 import com.muebleria.mctecommercebackend.security.user.UserDetailsImpl;
 import com.muebleria.mctecommercebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page; // Importar Page
+import org.springframework.data.domain.PageImpl; // Importar PageImpl
+import org.springframework.data.domain.Pageable; // Importar Pageable
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -122,17 +125,25 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * Obtiene una lista de todos los usuarios no eliminados lógicamente.
+     * **Modificado:** Obtiene una página de usuarios activos (no eliminados lógicamente).
      *
-     * @return Una {@link List<User>} de todos los usuarios activos en la base de datos.
+     * @param pageable Objeto Pageable con la información de paginación (número de página, tamaño, ordenación).
+     * @return Una Page de entidades User activas.
      */
-
     @Override
-    public List<User> findAllUsers() {
-        // Mejorado para filtrar usuarios eliminados lógicamente
-        return userRepository.findAll().stream()
+    public Page<User> findAllUsers(Pageable pageable) {
+        // Obtenemos todos los usuarios del repositorio y los filtramos por isDeleted=false
+        List<User> activeUsers = userRepository.findAll().stream()
                 .filter(user -> !user.getIsDeleted())
                 .collect(Collectors.toList());
+
+        // Implementación de paginación manual sobre la lista filtrada
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), activeUsers.size());
+        List<User> pageContent = activeUsers.subList(start, end);
+
+        // Devolvemos un PageImpl que es una implementación de la interfaz Page
+        return new PageImpl<>(pageContent, pageable, activeUsers.size());
     }
 
     /**

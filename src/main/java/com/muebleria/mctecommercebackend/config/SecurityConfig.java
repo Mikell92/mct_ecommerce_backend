@@ -69,6 +69,10 @@ public class SecurityConfig {
                         // PERO LUEGO LOS PROTEGEREMOS POR ROLES.
                         .requestMatchers("/api/users/**").authenticated() // TEMPORAL: Permite todo en users por ahora
 
+                        // Rutas del Módulo de Categorías (se protegerán con @PreAuthorize en el controlador)
+                        // Aseguramos que todas las peticiones a /api/categories pasen por el filtro JWT
+                        .requestMatchers("/api/categories/**").authenticated()
+
                         // Todas las demás solicitudes requieren autenticación
                         .anyRequest().authenticated()
                 );

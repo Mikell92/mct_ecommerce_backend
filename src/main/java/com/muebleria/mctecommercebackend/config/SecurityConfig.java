@@ -35,7 +35,7 @@ public class SecurityConfig {
     private AuthEntryPointJwt unauthorizedHandler; // Manejador de errores de autenticación
 
     @Autowired
-    private JwtAccessDeniedHandler accessDeniedHandler; // Añade esta línea
+    private JwtAccessDeniedHandler accessDeniedHandler; // Inyecta el AccessDeniedHandler
 
     @Bean // Define el filtro de autenticación JWT
     public AuthTokenFilter authenticationJwtTokenFilter() {
@@ -70,8 +70,10 @@ public class SecurityConfig {
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT es sin estado
                 .authorizeHttpRequests(authorize -> authorize
+
                         // Permitir el endpoint de autenticación (login y registro si lo tuvieras aquí)
                         .requestMatchers("/api/auth/**").permitAll()
+
                         // Permitir los endpoints de /api/users para pruebas iniciales,
                         // PERO LUEGO LOS PROTEGEREMOS POR ROLES.
                         .requestMatchers("/api/users/**").authenticated() // TEMPORAL: Permite todo en users por ahora
@@ -79,6 +81,10 @@ public class SecurityConfig {
                         // Rutas del Módulo de Categorías (se protegerán con @PreAuthorize en el controlador)
                         // Aseguramos que todas las peticiones a /api/categories pasen por el filtro JWT
                         .requestMatchers("/api/categories/**").authenticated()
+
+                        // Rutas del Módulo de Categorías (se protegerán con @PreAuthorize en el controlador)
+                        // Aseguramos que todas las peticiones a /api/categories pasen por el filtro JWT
+                        .requestMatchers("/api/branches/**").authenticated()
 
                         // Todas las demás solicitudes requieren autenticación
                         .anyRequest().authenticated()

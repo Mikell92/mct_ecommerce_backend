@@ -2,6 +2,7 @@ package com.muebleria.mctecommercebackend.config;
 
 import com.muebleria.mctecommercebackend.security.jwt.AuthEntryPointJwt;
 import com.muebleria.mctecommercebackend.security.jwt.AuthTokenFilter;
+import com.muebleria.mctecommercebackend.security.jwt.JwtAccessDeniedHandler;
 import com.muebleria.mctecommercebackend.security.user.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -33,6 +34,9 @@ public class SecurityConfig {
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler; // Manejador de errores de autenticación
 
+    @Autowired
+    private JwtAccessDeniedHandler accessDeniedHandler; // Añade esta línea
+
     @Bean // Define el filtro de autenticación JWT
     public AuthTokenFilter authenticationJwtTokenFilter() {
         return new AuthTokenFilter();
@@ -60,7 +64,10 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Deshabilita CSRF para APIs REST
-                .exceptionHandling(exception -> exception.authenticationEntryPoint(unauthorizedHandler)) // Manejo de errores 401
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(unauthorizedHandler) // Manejo de errores 401
+                        .accessDeniedHandler(accessDeniedHandler)     // ¡Añade esto para 403 Forbidden!
+                )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT es sin estado
                 .authorizeHttpRequests(authorize -> authorize
                         // Permitir el endpoint de autenticación (login y registro si lo tuvieras aquí)

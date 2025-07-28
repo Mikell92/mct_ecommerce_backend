@@ -11,13 +11,7 @@ import org.springframework.data.web.PageableDefault; // Importar PageableDefault
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.MethodArgumentNotValidException; // Para manejar errores de validación
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.ExceptionHandler; // Para manejo de excepciones
-import org.springframework.web.bind.annotation.ResponseStatus; // Para manejar excepciones
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController // Indica que esta clase es un controlador REST de Spring
 @RequestMapping("/api/users") // Define la ruta base para todos los endpoints en este controlador
@@ -129,27 +123,7 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT); // Retorna 204 No Content (indica éxito sin contenido de respuesta)
     }
 
-    // **Manejo Global de Excepciones para Validaciones**
-    // Este método se ejecutará automáticamente cuando una validación @Valid falle en cualquier controlador
-    @ResponseStatus(HttpStatus.BAD_REQUEST) // Establece el código de estado HTTP a 400 Bad Request
-    @ExceptionHandler(MethodArgumentNotValidException.class) // Captura esta excepción específica de validación
-    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getAllErrors().forEach(error -> {
-            String fieldName = ((org.springframework.validation.FieldError) error).getField();
-            String errorMessage = error.getDefaultMessage();
-            errors.put(fieldName, errorMessage);
-        });
-        return errors; // Retorna un mapa con los nombres de los campos y sus mensajes de error
-    }
+    // ¡¡Los métodos @ExceptionHandler han sido eliminados de aquí!!
+    // Ahora serán manejados por GlobalExceptionHandler.java
 
-    // **Manejo de Excepciones para Errores de Negocio (ej. usuario ya existe)**
-    // Esto captura la RuntimeException que lanzamos en el servicio si el usuario ya existe.
-    @ResponseStatus(HttpStatus.CONFLICT) // Establece el código de estado HTTP a 409 Conflict
-    @ExceptionHandler(RuntimeException.class)
-    public Map<String, String> handleBusinessExceptions(RuntimeException ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", ex.getMessage());
-        return error;
-    }
 }

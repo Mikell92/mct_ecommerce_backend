@@ -86,6 +86,9 @@ public class SecurityConfig {
                         // Aseguramos que todas las peticiones a /api/categories pasen por el filtro JWT
                         .requestMatchers("/api/branches/**").authenticated()
 
+                        .requestMatchers("/api/drivers/**").authenticated() // Rutas para el módulo de chóferes
+
+
                         // Todas las demás solicitudes requieren autenticación
                         .anyRequest().authenticated()
                 );

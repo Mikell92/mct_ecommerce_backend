@@ -42,7 +42,8 @@ public class UserController {
                 savedUser.getUsername(),
                 null, // La contraseña nunca se retorna en la respuesta de la API
                 savedUser.getRole(),
-                savedUser.getIsDeleted()
+                savedUser.getIsDeleted(),
+                savedUser.getManagedBranch() != null ? savedUser.getManagedBranch().getBranchId() : null
         );
         return new ResponseEntity<>(responseDTO, HttpStatus.CREATED); // Retorna 201 Created si es exitoso
     }
@@ -62,7 +63,8 @@ public class UserController {
                             user.getUsername(),
                             null,
                             user.getRole(),
-                            user.getIsDeleted()
+                            user.getIsDeleted(),
+                            user.getManagedBranch() != null ? user.getManagedBranch().getBranchId() : null
                     );
                     return new ResponseEntity<>(responseDTO, HttpStatus.OK); // Retorna 200 OK
                 })
@@ -89,7 +91,8 @@ public class UserController {
                 user.getUsername(),
                 null, // Contraseña no se expone
                 user.getRole(),
-                user.getIsDeleted()
+                user.getIsDeleted(),
+                user.getManagedBranch() != null ? user.getManagedBranch().getBranchId() : null
         ));
         return new ResponseEntity<>(userDTOsPage, HttpStatus.OK);
     }
@@ -108,7 +111,8 @@ public class UserController {
                 updatedUser.getUsername(),
                 null,
                 updatedUser.getRole(),
-                updatedUser.getIsDeleted()
+                updatedUser.getIsDeleted(),
+                updatedUser.getManagedBranch() != null ? updatedUser.getManagedBranch().getBranchId() : null
         );
         return new ResponseEntity<>(responseDTO, HttpStatus.OK); // Retorna 200 OK
     }

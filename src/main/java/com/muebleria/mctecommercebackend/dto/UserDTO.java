@@ -29,4 +29,7 @@ public class UserDTO {
 
     // **Validación para 'isDeleted'**
     private Boolean isDeleted;
+
+    // Este campo es opcional, ya que un ADMIN no tendrá una sucursal gestionada.
+    private Integer managedBranchId; // ID de la sucursal gestionada por el usuario
 }

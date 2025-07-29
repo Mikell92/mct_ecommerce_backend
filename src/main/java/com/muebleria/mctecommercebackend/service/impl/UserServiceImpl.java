@@ -3,7 +3,9 @@ package com.muebleria.mctecommercebackend.service.impl;
 import com.muebleria.mctecommercebackend.dto.UserDTO;
 import com.muebleria.mctecommercebackend.exception.ResourceNotFoundException;
 import com.muebleria.mctecommercebackend.model.User;
+import com.muebleria.mctecommercebackend.model.Branch; // [MEJORA] -> Importa la entidad Branch
 import com.muebleria.mctecommercebackend.repository.UserRepository;
+import com.muebleria.mctecommercebackend.repository.BranchRepository; // [MEJORA] -> Importa BranchRepository
 import com.muebleria.mctecommercebackend.security.user.UserDetailsImpl;
 import com.muebleria.mctecommercebackend.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +27,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final BranchRepository branchRepository; // [MEJORA] -> Inyección de BranchRepository
 
     /**
      * Constructor para la inyección de dependencias de Spring.
@@ -34,9 +37,10 @@ public class UserServiceImpl implements UserService {
      */
 
     @Autowired // Inyecta las dependencias necesarias (UserRepository y PasswordEncoder)
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, BranchRepository branchRepository) { // [MEJORA] -> Añade BranchRepository al constructor
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.branchRepository = branchRepository; // [MEJORA] -> Asigna BranchRepository
     }
 
     /**
@@ -88,8 +92,22 @@ public class UserServiceImpl implements UserService {
 
         user.setIsDeleted(false); // Por defecto, un nuevo usuario no está eliminado
 
+        // --- [MEJORA] -> Lógica para asignar la sucursal gestionada ---
+        if (userDTO.getManagedBranchId() != null) {
+            Branch managedBranch = branchRepository.findById(userDTO.getManagedBranchId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Sucursal gestionada no encontrada con ID: " + userDTO.getManagedBranchId()));
+            user.setManagedBranch(managedBranch);
+        } else {
+            // Si el managedBranchId es nulo en el DTO, asegúrate de que el campo en User también sea nulo.
+            user.setManagedBranch(null);
+        }
+        // --- FIN MEJORA ---
+
         // Asignar el ID del usuario que lo crea (Auditoría)
         getCurrentUserId().ifPresent(user::setCreatedByUserId);
+        //user.setCreatedAt(LocalDateTime.now()); // [MEJORA] -> Inicializa createdAt
+        //user.setLastUpdatedAt(LocalDateTime.now()); // [MEJORA] -> Inicializa lastUpdatedAt
+
 
         return userRepository.save(user);
     }
@@ -187,8 +205,21 @@ public class UserServiceImpl implements UserService {
         }
         existingUser.setRole(role);
 
+        // --- [MEJORA] -> Lógica para asignar/actualizar la sucursal gestionada ---
+        if (userDTO.getManagedBranchId() != null) {
+            Branch managedBranch = branchRepository.findById(userDTO.getManagedBranchId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Sucursal gestionada no encontrada con ID: " + userDTO.getManagedBranchId()));
+            existingUser.setManagedBranch(managedBranch);
+        } else {
+            // Si el managedBranchId es nulo en el DTO, establece el managedBranch del usuario a nulo.
+            // Esto permite desasociar un usuario de una sucursal (ej. convertir un CAJERO_SUCURSAL en ADMIN).
+            existingUser.setManagedBranch(null);
+        }
+        // --- FIN MEJORA ---
+
         // Auditoría: Asigna el ID del usuario que lo actualiza
         getCurrentUserId().ifPresent(existingUser::setUpdatedByUserId);
+        //existingUser.setLastUpdatedAt(LocalDateTime.now()); // Actualiza lastUpdatedAt
 
         return userRepository.save(existingUser);
     }

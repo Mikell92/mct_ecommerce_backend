@@ -51,6 +51,12 @@ public class User {
     @Column(name = "deleted_by_user_id") // Mapea 'deleted_by_user_id'
     private Integer deletedByUserId; // ID del usuario que marcó este registro como eliminado
 
+    // --- NUEVA PROPIEDAD PARA ASOCIAR A LA SUCURSAL GESTIONADA ---
+    @ManyToOne(fetch = FetchType.LAZY) // Lazy loading es recomendable
+    @JoinColumn(name = "managed_branch_id", referencedColumnName = "branch_id")
+    private Branch managedBranch; // Referencia a la entidad Branch (asegúrate de que exista Branch.java)
+
+
     // Constructor para registro de nuevos usuarios (simplificado para el servicio)
     public User(String username, String passwordHash, String role) {
         this.username = username;

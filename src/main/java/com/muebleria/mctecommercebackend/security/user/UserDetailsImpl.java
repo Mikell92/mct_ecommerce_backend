@@ -24,27 +24,39 @@ public class UserDetailsImpl implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
     private Boolean isDeleted; // Estado de eliminación del usuario
 
-    // Constructor para crear una instancia de UserDetailsImpl
+    // [CAMBIO] -> Nueva propiedad para almacenar el ID de la sucursal gestionada
+    private Integer managedBranchId;
+
+    // [CAMBIO] -> Constructor actualizado para incluir managedBranchId
     public UserDetailsImpl(Integer id, String username, String password,
-                           Collection<? extends GrantedAuthority> authorities, Boolean isDeleted) {
+                           Collection<? extends GrantedAuthority> authorities,
+                           Boolean isDeleted, Integer managedBranchId) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.authorities = authorities;
         this.isDeleted = isDeleted;
+        this.managedBranchId = managedBranchId; // Inicializar la nueva propiedad
     }
 
-    // Método estático para construir UserDetailsImpl a partir de nuestra entidad User
+    // [CAMBIO] -> Método build() actualizado para obtener y pasar managedBranchId
     public static UserDetailsImpl build(User user) {
         // Convertimos el rol del usuario (String) a una colección de GrantedAuthority
-        // Aquí, asumimos un solo rol por usuario.
-        GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole());
+        GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole()); // Se puede agregar/quitar el prefijo "ROLE_"
+
+        // Obtener el ID de la sucursal gestionada si existe
+        Integer branchId = null;
+        if (user.getManagedBranch() != null) {
+            branchId = user.getManagedBranch().getBranchId();
+        }
+
         return new UserDetailsImpl(
-                user.getUserId(), // El userId de la entidad User
+                user.getUserId(),
                 user.getUsername(),
-                user.getPasswordHash(), // Usamos el passwordHash como contraseña para Spring Security
-                Collections.singletonList(authority), // Convierte un solo rol en una lista
-                user.getIsDeleted() // Pasa el estado de isDeleted de la entidad User
+                user.getPasswordHash(),
+                Collections.singletonList(authority),
+                user.getIsDeleted(),
+                branchId // Pasar el ID de la sucursal gestionada
         );
     }
 

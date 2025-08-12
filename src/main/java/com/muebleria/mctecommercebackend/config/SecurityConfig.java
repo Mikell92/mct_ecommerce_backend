@@ -3,6 +3,7 @@ package com.muebleria.mctecommercebackend.config;
 import com.muebleria.mctecommercebackend.security.jwt.AuthEntryPointJwt;
 import com.muebleria.mctecommercebackend.security.jwt.AuthTokenFilter;
 import com.muebleria.mctecommercebackend.security.jwt.JwtAccessDeniedHandler;
+import com.muebleria.mctecommercebackend.security.jwt.TimeAccessFilter;
 import com.muebleria.mctecommercebackend.security.user.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -37,10 +38,11 @@ public class SecurityConfig {
     @Autowired
     private JwtAccessDeniedHandler accessDeniedHandler; // Inyecta el AccessDeniedHandler
 
-    @Bean // Define el filtro de autenticación JWT
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
+    @Autowired
+    private TimeAccessFilter timeAccessFilter; // 2. INYECTA EL NUEVO FILTRO
+
+    @Autowired
+    private AuthTokenFilter authTokenFilter;
 
     @Bean // Configura el proveedor de autenticación
     public DaoAuthenticationProvider authenticationProvider() {
@@ -71,23 +73,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // JWT es sin estado
                 .authorizeHttpRequests(authorize -> authorize
 
-                        // Permitir el endpoint de autenticación (login y registro si lo tuvieras aquí)
+                        // Permitir el endpoint de autenticación (login)
                         .requestMatchers("/api/auth/**").permitAll()
-
-                        // Permitir los endpoints de /api/users para pruebas iniciales,
-                        // PERO LUEGO LOS PROTEGEREMOS POR ROLES.
-                        .requestMatchers("/api/users/**").authenticated() // TEMPORAL: Permite todo en users por ahora
-
-                        // Rutas del Módulo de Categorías (se protegerán con @PreAuthorize en el controlador)
-                        // Aseguramos que todas las peticiones a /api/categories pasen por el filtro JWT
-                        .requestMatchers("/api/categories/**").authenticated()
-
-                        // Rutas del Módulo de Categorías (se protegerán con @PreAuthorize en el controlador)
-                        // Aseguramos que todas las peticiones a /api/categories pasen por el filtro JWT
-                        .requestMatchers("/api/branches/**").authenticated()
-
-                        .requestMatchers("/api/drivers/**").authenticated() // Rutas para el módulo de chóferes
-
 
                         // Todas las demás solicitudes requieren autenticación
                         .anyRequest().authenticated()
@@ -95,8 +82,10 @@ public class SecurityConfig {
 
         http.authenticationProvider(authenticationProvider()); // Añade nuestro proveedor de autenticación
 
-        // Añade nuestro filtro JWT antes del filtro de autenticación de nombre de usuario y contraseña
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
+
+        http.addFilterAfter(timeAccessFilter, AuthTokenFilter.class);
+
 
         return http.build();
     }

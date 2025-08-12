@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class JwtResponse {
     private String token;
     private String type = "Bearer"; // Tipo de token, por defecto "Bearer"
-    private Integer userId;
+    private Long userId;
     private String username;
     private String role; // El rol del usuario
 }

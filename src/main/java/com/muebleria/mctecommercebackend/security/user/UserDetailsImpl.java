@@ -8,55 +8,53 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.Collections; // Usaremos Collections.singletonList para un solo rol
+import java.util.Collections;
 import java.util.Objects;
 
-@Data // Lombok para getters y setters
+@Data
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
-    private Integer id;
+    // CAMBIO: de Integer a Long
+    private Long id;
+
     private String username;
 
-    @JsonIgnore // Evita que el passwordHash se serialice en JSON
+    @JsonIgnore
     private String password;
 
     private Collection<? extends GrantedAuthority> authorities;
-    private Boolean isDeleted; // Estado de eliminación del usuario
 
-    // [CAMBIO] -> Nueva propiedad para almacenar el ID de la sucursal gestionada
-    private Integer managedBranchId;
+    // Este campo se usará en el método isEnabled()
+    private boolean isEnabled;
 
-    // [CAMBIO] -> Constructor actualizado para incluir managedBranchId
-    public UserDetailsImpl(Integer id, String username, String password,
+    private Long managedBranchId;
+
+    // CAMBIO: El constructor ahora acepta Long para el id
+    public UserDetailsImpl(Long id, String username, String password,
                            Collection<? extends GrantedAuthority> authorities,
-                           Boolean isDeleted, Integer managedBranchId) {
+                           boolean isEnabled, Long managedBranchId) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.authorities = authorities;
-        this.isDeleted = isDeleted;
-        this.managedBranchId = managedBranchId; // Inicializar la nueva propiedad
+        this.isEnabled = isEnabled;
+        this.managedBranchId = managedBranchId;
     }
 
-    // [CAMBIO] -> Método build() actualizado para obtener y pasar managedBranchId
     public static UserDetailsImpl build(User user) {
-        // Convertimos el rol del usuario (String) a una colección de GrantedAuthority
-        GrantedAuthority authority = new SimpleGrantedAuthority(user.getRole()); // Se puede agregar/quitar el prefijo "ROLE_"
+        GrantedAuthority authority = new SimpleGrantedAuthority("ROLE_"+user.getRole());
 
-        // Obtener el ID de la sucursal gestionada si existe
-        Integer branchId = null;
-        if (user.getManagedBranch() != null) {
-            branchId = user.getManagedBranch().getBranchId();
-        }
+        // CAMBIO AQUÍ: user.getManagedBranch().getId() en lugar de .getBranchId()
+        Long branchId = (user.getManagedBranch() != null) ? user.getManagedBranch().getId() : null;
 
         return new UserDetailsImpl(
-                user.getUserId(),
+                user.getId(),
                 user.getUsername(),
-                user.getPasswordHash(),
+                user.getPassword(),
                 Collections.singletonList(authority),
-                user.getIsDeleted(),
-                branchId // Pasar el ID de la sucursal gestionada
+                user.isActive(),
+                branchId
         );
     }
 
@@ -77,23 +75,23 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // Podrías implementar lógica para cuentas expiradas aquí
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // Podrías implementar lógica para cuentas bloqueadas aquí
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // Podrías implementar lógica para credenciales expiradas aquí
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        // La cuenta está habilitada si NO está marcada como eliminada
-        return !this.isDeleted;
+        // La cuenta está habilitada si el campo 'isActive' es true en la BD
+        return this.isEnabled;
     }
 
     @Override

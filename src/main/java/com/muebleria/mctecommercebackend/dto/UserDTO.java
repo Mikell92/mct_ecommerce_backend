@@ -1,35 +1,58 @@
 package com.muebleria.mctecommercebackend.dto;
 
-import jakarta.validation.constraints.NotBlank; // Importa para validar que un campo no esté vacío (ni solo espacios)
-import jakarta.validation.constraints.Size;    // Importa para validar la longitud de una cadena
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.util.List;
 
-@Data // Genera getters, setters, toString, equals y hashCode de Lombok
-@NoArgsConstructor // Genera un constructor sin argumentos
-@AllArgsConstructor // Genera un constructor con todos los argumentos
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL) // No mostrará campos nulos en la respuesta JSON
 public class UserDTO {
 
-    private Integer userId; // Usamos Integer para el ID. No se valida aquí porque es generado por la BD o viene de la URL para updates.
-
-    // **Validaciones para 'username'**
+    // --- Datos de la cuenta (User) ---
+    private Long id;
     @NotBlank(message = "El nombre de usuario no puede estar vacío.")
-    @Size(min = 3, max = 100, message = "El nombre de usuario debe tener entre 3 y 100 caracteres.")
     private String username;
-
-    // **Validaciones para 'password'** (solo para entrada, se hasheará y no se devolverá)
-    @NotBlank(message = "La contraseña no puede estar vacía.")
     @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres.")
     private String password;
-
-    // **Validaciones para 'role'**
     @NotBlank(message = "El rol no puede estar vacío.")
     private String role;
+    private boolean active;
+    private boolean bypassAccessRules;
+    private Long managedBranchId;
 
-    // **Validación para 'isDeleted'**
-    private Boolean isDeleted;
+    @Valid // Valida los campos dentro de ProfileInfo si está presente
+    @NotNull(message = "La información del perfil es obligatoria.")
+    private ProfileInfo profile;
 
-    // Este campo es opcional, ya que un ADMIN no tendrá una sucursal gestionada.
-    private Integer managedBranchId; // ID de la sucursal gestionada por el usuario
+    @Valid
+    private DriverInfo driverDetails;
+
+    @Valid
+    private List<UserAccessRuleDTO> accessRules;
+
+    @Data
+    public static class ProfileInfo {
+        @NotBlank
+        private String firstName;
+        @NotBlank
+        private String lastName;
+        private String email;
+        private String phone;
+        private String address;
+        private String employeeNumber;
+        private LocalDate hireDate;
+        private LocalDate terminationDate;
+    }
+
+    @Data
+    public static class DriverInfo {
+        @NotBlank
+        private String licenseNumber;
+        private LocalDate licenseExpirationDate;
+    }
 }

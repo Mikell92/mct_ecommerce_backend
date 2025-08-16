@@ -65,6 +65,8 @@ public class SecurityConfig {
     @Bean // Configura la cadena de filtros de seguridad HTTP
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Añadimos el CorsFilter al principio de la cadena de seguridad
+                .addFilterBefore(corsFilter(), UsernamePasswordAuthenticationFilter.class)
                 .csrf(AbstractHttpConfigurer::disable) // Deshabilita CSRF para APIs REST
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(unauthorizedHandler) // Manejo de errores 401

@@ -15,8 +15,17 @@ public class BranchDTO {
     @NotBlank(message = "El nombre de la sucursal no puede estar vacío.")
     private String name;
 
-    @NotBlank(message = "La dirección de la sucursal no puede estar vacía.")
-    private String address;
+    private String streetAddress;
+
+    private String addressLine2;
+
+    private String neighborhood;
+
+    private String city;
+
+    private String state;
+
+    private String postalCode;
 
     private String phone;
 

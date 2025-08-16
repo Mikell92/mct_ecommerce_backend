@@ -13,7 +13,6 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL) // No mostrará campos nulos en la respuesta JSON
 public class UserDTO {
 
-    // --- Datos de la cuenta (User) ---
     private Long id;
     @NotBlank(message = "El nombre de usuario no puede estar vacío.")
     private String username;

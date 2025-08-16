@@ -102,7 +102,12 @@ public class BranchServiceImpl implements BranchService {
         return new BranchDTO(
                 branch.getId(),
                 branch.getName(),
-                branch.getAddress(),
+                branch.getStreetAddress(),
+                branch.getAddressLine2(),
+                branch.getNeighborhood(),
+                branch.getCity(),
+                branch.getState(),
+                branch.getPostalCode(),
                 branch.getPhone(),
                 branch.getRfc(),
                 branch.getOrderPrefix(),
@@ -112,12 +117,18 @@ public class BranchServiceImpl implements BranchService {
 
     private void mapDtoToEntity(BranchDTO dto, Branch entity) {
         entity.setName(dto.getName());
-        entity.setAddress(dto.getAddress());
+        entity.setStreetAddress(dto.getStreetAddress());
+        entity.setAddressLine2(dto.getAddressLine2());
+        entity.setNeighborhood(dto.getNeighborhood());
+        entity.setCity(dto.getCity());
+        entity.setState(dto.getState());
+        entity.setPostalCode(dto.getPostalCode());
         entity.setPhone(dto.getPhone());
         entity.setRfc(dto.getRfc());
         entity.setOrderPrefix(dto.getOrderPrefix());
         entity.setLastOrderSequenceNumber(dto.getLastOrderSequenceNumber());
     }
+
 
     private Optional<User> getCurrentUserEntity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

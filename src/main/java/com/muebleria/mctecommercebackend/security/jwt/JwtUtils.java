@@ -2,7 +2,6 @@ package com.muebleria.mctecommercebackend.security.jwt;
 
 import com.muebleria.mctecommercebackend.security.user.UserDetailsImpl;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -28,7 +28,9 @@ public class JwtUtils {
 
     // Obtiene la clave de firma a partir del secreto JWT.
     private Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        // Trata el secreto como una cadena de texto UTF-8 y la convierte a bytes.
+        // Esta es la forma correcta y estándar de manejar claves de texto plano.
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     // Genera un JWT a partir de la autenticación del usuario.

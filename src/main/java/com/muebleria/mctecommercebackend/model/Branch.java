@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.Where;
 
@@ -14,7 +13,6 @@ import java.time.LocalDateTime;
 @Setter
 @Entity
 @Table(name = "branches")
-@SQLDelete(sql = "UPDATE branches SET is_deleted = true, deleted_at = NOW() WHERE branch_id = ?")
 @Where(clause = "is_deleted = false")
 public class Branch {
 
@@ -26,13 +24,28 @@ public class Branch {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "address", nullable = false, length = 255)
-    private String address;
+    @Column(name = "street_address", length = 255)
+    private String streetAddress;
+
+    @Column(name = "address_line_2", length = 255)
+    private String addressLine2;
+
+    @Column(name = "neighborhood", length = 100)
+    private String neighborhood;
+
+    @Column(name = "city", length = 100)
+    private String city;
+
+    @Column(name = "state", length = 100)
+    private String state;
+
+    @Column(name = "postal_code", length = 10)
+    private String postalCode;
 
     @Column(name = "phone", length = 20)
     private String phone;
 
-    @Column(name = "rfc", length = 13)
+    @Column(name = "rfc", length = 13, unique = true)
     private String rfc;
 
     @Column(name = "order_prefix", nullable = false, unique = true, length = 10)

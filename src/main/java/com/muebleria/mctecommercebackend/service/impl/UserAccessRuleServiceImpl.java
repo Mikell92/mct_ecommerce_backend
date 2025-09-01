@@ -43,7 +43,6 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
         if (targetUser.isBypassAccessRules()) {
             throw new IllegalArgumentException("No se pueden asignar horarios a este usuario porque tiene permiso para omitir las reglas de acceso.");
         }
-
         if (!canManageSchedules(currentUser, targetUser)) {
             throw new AccessDeniedException("No tienes permiso para gestionar los horarios de este usuario.");
         }
@@ -57,6 +56,7 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
         mapDtoToEntity(ruleDTO, rule);
         rule.setUser(targetUser);
         rule.setCreatedBy(currentUser);
+        rule.setUpdatedBy(currentUser);
 
         UserAccessRule savedRule = ruleRepository.save(rule);
         return toDTO(savedRule);
@@ -66,6 +66,7 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
     @Transactional(readOnly = true)
     public List<UserAccessRuleDTO> getRulesByUserId(Long userId) {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
+        // Usamos findById, que ahora puede encontrar usuarios eliminados, permitiendo la auditoría.
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
@@ -121,18 +122,14 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
         if (currentUser.getId().equals(targetUser.getId())) {
             return false;
         }
-
         Role currentUserRole = currentUser.getRole();
         Role targetUserRole = targetUser.getRole();
-
         if (currentUserRole == Role.DEVELOPER) {
             return targetUserRole != Role.DEVELOPER;
         }
-
         if (currentUserRole == Role.ADMIN) {
             return targetUserRole.getLevel() < currentUserRole.getLevel();
         }
-
         return false;
     }
 
@@ -142,6 +139,7 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
             return Optional.empty();
         }
         Long currentUserId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
+        // Usamos el findById que puede encontrar usuarios eliminados, para asegurar que la sesión es válida.
         return userRepository.findById(currentUserId);
     }
 

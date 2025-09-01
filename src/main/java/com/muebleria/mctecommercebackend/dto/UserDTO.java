@@ -7,10 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL) // No mostrará campos nulos en la respuesta JSON
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDTO {
 
     private Long id;
@@ -22,9 +23,11 @@ public class UserDTO {
     private String role;
     private boolean active;
     private boolean bypassAccessRules;
-    private Long managedBranchId;
 
-    @Valid // Valida los campos dentro de ProfileInfo si está presente
+    private Long managedBranchId;
+    private String managedBranchName;
+
+    @Valid
     @NotNull(message = "La información del perfil es obligatoria.")
     private ProfileInfo profile;
 
@@ -33,6 +36,21 @@ public class UserDTO {
 
     @Valid
     private List<UserAccessRuleDTO> accessRules;
+
+    private LocalDateTime createdAt;
+    private Long createdById;
+    private String createdByUsername;
+    private String createdByFullName;
+
+    private LocalDateTime lastUpdatedAt;
+    private Long updatedById;
+    private String updatedByUsername;
+    private String updatedByFullName;
+
+    private LocalDateTime deletedAt;
+    private Long deletedById;
+    private String deletedByUsername;
+    private String deletedByFullName;
 
     @Data
     public static class ProfileInfo {

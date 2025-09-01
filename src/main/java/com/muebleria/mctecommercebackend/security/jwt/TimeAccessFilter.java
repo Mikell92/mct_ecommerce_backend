@@ -40,43 +40,36 @@ public class TimeAccessFilter extends OncePerRequestFilter {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        // 1. Si no hay un usuario autenticado o la ruta es de login, no hacemos nada.
         if (authentication == null || !authentication.isAuthenticated() || !(authentication.getPrincipal() instanceof UserDetailsImpl) || request.getRequestURI().startsWith("/api/auth")) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 2. Obtenemos el ID del usuario actual.
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         Long userId = userDetails.getId();
 
-        // 3. Buscamos el usuario y sus reglas en la base de datos.
-        Optional<User> userOpt = userRepository.findById(userId);
+        // Usamos el nuevo método del repositorio que carga las reglas de acceso de forma anticipada
+        Optional<User> userOpt = userRepository.findByIdWithAccessRules(userId);
 
         if (userOpt.isEmpty()) {
-            // Esto sería raro, pero por seguridad, denegamos el acceso.
             sendErrorResponse(response, "Usuario no encontrado.");
             return;
         }
 
         User user = userOpt.get();
 
-        // 4. Si el usuario puede omitir las reglas, le damos acceso inmediato.
         if (user.isBypassAccessRules()) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        // 5. Verificamos si hay una regla activa para el día y hora actual.
         for (UserAccessRule rule : user.getAccessRules()) {
             if (rule.isActive() && isTimeAllowed(rule)) {
-                // Si encontramos una regla válida, permitimos el acceso y terminamos.
                 filterChain.doFilter(request, response);
                 return;
             }
         }
 
-        // 6. Si el bucle termina y no se encontró una regla válida, denegamos el acceso.
         logger.warn("Acceso denegado para el usuario '{}' fuera de su horario permitido.", user.getUsername());
         sendErrorResponse(response, "Acceso fuera del horario permitido.");
     }
@@ -88,9 +81,7 @@ public class TimeAccessFilter extends OncePerRequestFilter {
             DayOfWeek currentDayInZone = nowInRuleZone.getDayOfWeek();
             LocalTime currentTimeInZone = nowInRuleZone.toLocalTime();
 
-            // Comprueba si la regla es para el día de hoy
             if (rule.getDayOfWeek() == currentDayInZone) {
-                // Comprueba si la hora actual está dentro del rango permitido
                 return !currentTimeInZone.isBefore(rule.getStartTime()) && !currentTimeInZone.isAfter(rule.getEndTime());
             }
         } catch (Exception e) {

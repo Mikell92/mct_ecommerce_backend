@@ -29,6 +29,9 @@ public class User {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String password;
 
+    @Column(name = "password_changed_at")
+    private LocalDateTime passwordChangedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 50)
     private Role role;

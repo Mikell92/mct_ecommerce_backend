@@ -61,7 +61,6 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional(readOnly = true)
     public Page<BranchDTO> findAll(Pageable pageable) {
-        // La anotación @Where en la entidad ya filtra los eliminados
         return branchRepository.findAll(pageable).map(this::toDTO);
     }
 
@@ -92,10 +91,8 @@ public class BranchServiceImpl implements BranchService {
         Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada con ID: " + id));
 
-        branch.setDeleted(true);
-        branch.setDeletedAt(LocalDateTime.now());
         branch.setDeletedBy(currentUser);
-        branchRepository.save(branch);
+        branchRepository.delete(branch);
     }
 
     private BranchDTO toDTO(Branch branch) {
@@ -128,7 +125,6 @@ public class BranchServiceImpl implements BranchService {
         entity.setOrderPrefix(dto.getOrderPrefix());
         entity.setLastOrderSequenceNumber(dto.getLastOrderSequenceNumber());
     }
-
 
     private Optional<User> getCurrentUserEntity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

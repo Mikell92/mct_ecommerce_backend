@@ -11,11 +11,13 @@ public interface UserService {
 
     UserDTO createUser(UserDTO userDTO);
 
+    Optional<UserProfileViewDTO> findMyProfileById(Long id);
+
     Optional<UserDTO> findById(Long id);
 
     Optional<UserDTO> findByUsername(String username);
 
-    Page<UserDTO> findAll(Pageable pageable, UserStatus status);
+    Page<UserSummaryDTO> findAll(Pageable pageable, UserStatus status, String search, String role, Long branchId);
 
     void deleteById(Long id);
 
@@ -23,7 +25,14 @@ public interface UserService {
 
     void updateOwnPassword(UserPasswordUpdateDTO passwordUpdateDTO);
 
+    void updateUserPassword(Long userId, AdminPasswordUpdateDTO passwordUpdateDTO);
+
+    UserDTO updateOwnProfile(UserProfileUpdateDTO profileUpdateDTO);
+
     UserDTO updateUserProfile(Long userId, UserProfileUpdateDTO profileUpdateDTO);
 
     UserDTO updateDriverDetails(Long userId, DriverDetailUpdateDTO driverDetailUpdateDTO);
+
+    UserDTO restoreUserById(Long id);
+
 }

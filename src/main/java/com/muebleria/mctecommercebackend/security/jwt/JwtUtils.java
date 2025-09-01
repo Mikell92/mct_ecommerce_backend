@@ -53,6 +53,11 @@ public class JwtUtils {
                 .parseClaimsJws(token).getBody().getSubject(); // Extrae el sujeto (nombre de usuario)
     }
 
+    public Claims getClaimsFromJwtToken(String token) {
+        return Jwts.parser().setSigningKey(key()).build()
+                .parseClaimsJws(token).getBody();
+    }
+
     // Valida un token JWT.
     public boolean validateJwtToken(String authToken) {
         try {

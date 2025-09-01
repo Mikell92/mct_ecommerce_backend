@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface UserAccessRuleRepository extends JpaRepository<UserAccessRule, Long> {
 
+    @Query("SELECT r FROM UserAccessRule r WHERE r.user.id = :userId")
     List<UserAccessRule> findByUserId(Long userId);
 
     Optional<UserAccessRule> findByUserIdAndDayOfWeek(Long userId, DayOfWeek dayOfWeek);

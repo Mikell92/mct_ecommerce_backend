@@ -15,31 +15,29 @@ import java.util.Objects;
 public class UserDetailsImpl implements UserDetails {
     private static final long serialVersionUID = 1L;
 
-    // CAMBIO: de Integer a Long
     private Long id;
-
     private String username;
-
     @JsonIgnore
     private String password;
-
     private Collection<? extends GrantedAuthority> authorities;
-
-    // Este campo se usará en el método isEnabled()
     private boolean isEnabled;
-
     private Long managedBranchId;
+
+    private String firstName;
+    private String lastName;
 
     // CAMBIO: El constructor ahora acepta Long para el id
     public UserDetailsImpl(Long id, String username, String password,
                            Collection<? extends GrantedAuthority> authorities,
-                           boolean isEnabled, Long managedBranchId) {
+                           boolean isEnabled, Long managedBranchId, String firstName, String lastName) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.authorities = authorities;
         this.isEnabled = isEnabled;
         this.managedBranchId = managedBranchId;
+        this.firstName = firstName;
+        this.lastName = lastName;
     }
 
     public static UserDetailsImpl build(User user) {
@@ -54,7 +52,9 @@ public class UserDetailsImpl implements UserDetails {
                 user.getPassword(),
                 Collections.singletonList(authority),
                 user.isActive(),
-                branchId
+                branchId,
+                user.getProfile().getFirstName(),
+                user.getProfile().getLastName()
         );
     }
 

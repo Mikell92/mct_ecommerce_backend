@@ -1,14 +1,13 @@
 package com.muebleria.mctecommercebackend.exception;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException; // Importar esta
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.context.request.WebRequest; // Posiblemente necesaria para contexto
-import org.springframework.web.servlet.NoHandlerFoundException; // Para 404 de rutas no mapeadas
+import org.springframework.web.context.request.WebRequest;
 
 
 import java.util.HashMap;
@@ -54,6 +53,24 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleNotFoundException(ResourceNotFoundException ex) {
         Map<String, String> error = new HashMap<>();
         error.put("error", ex.getMessage());
+        return error;
+    }
+
+    /**
+     * Maneja las excepciones de Entidad No Encontrada lanzadas por JPA/Hibernate.
+     * Esto ocurre comúnmente al intentar acceder a una relación 'lazy' de una entidad
+     * que no se puede cargar (ej. un usuario eliminado con @Where).
+     * Retorna un 404 Not Found para ocultar los detalles internos.
+     *
+     * @param ex La excepción {@link EntityNotFoundException}.
+     * @return Un mapa que contiene un mensaje de error genérico y seguro.
+     */
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(EntityNotFoundException.class)
+    public Map<String, String> handleEntityNotFoundException(EntityNotFoundException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Recurso no encontrado");
+        error.put("message", "El recurso al que se intenta acceder no existe o no se pudo cargar.");
         return error;
     }
 

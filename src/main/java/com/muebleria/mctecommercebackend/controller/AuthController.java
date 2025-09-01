@@ -6,51 +6,62 @@ import com.muebleria.mctecommercebackend.security.jwt.JwtUtils;
 import com.muebleria.mctecommercebackend.security.user.UserDetailsImpl;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/auth") // Ruta base para el controlador de autenticación
+@RequestMapping("/api/auth")
 public class AuthController {
 
     @Autowired
-    AuthenticationManager authenticationManager; // Gestiona el proceso de autenticación
+    AuthenticationManager authenticationManager;
 
     @Autowired
-    JwtUtils jwtUtils; // Utilidad para generar y validar JWT
+    JwtUtils jwtUtils;
 
-    @PostMapping("/login") // Endpoint para iniciar sesión
+    @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        // 1. Autenticar al usuario con las credenciales proporcionadas
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        // 2. Establecer la autenticación en el contexto de seguridad de Spring
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Manejo de Excepción de Horario
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
-        // 3. Generar el token JWT
-        String jwt = jwtUtils.generateJwtToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String jwt = jwtUtils.generateJwtToken(authentication);
 
-        // 4. Obtener los detalles del usuario autenticado
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            List<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
 
-        // 5. Extraer los roles/autoridades del usuario
-        List<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList());
+            return ResponseEntity.ok(new JwtResponse(jwt, "Bearer",
+                    userDetails.getId(),
+                    userDetails.getUsername(),
+                    roles.isEmpty() ? null : roles.get(0),
+                    userDetails.getFirstName(),
+                    userDetails.getLastName()
+            ));
 
-        // 6. Retornar el JWT y la información del usuario en la respuesta
-        return ResponseEntity.ok(new JwtResponse(jwt, "Bearer",
-                userDetails.getId(),
-                userDetails.getUsername(),
-                roles.isEmpty() ? null : roles.get(0))); // Asumiendo un solo rol principal por simplicidad en JwtResponse
+        } catch (LockedException e) {
+            // Atrapamos específicamente el error de cuenta bloqueada (por horario)
+            // y devolvemos un mensaje claro.
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Acceso Denegado");
+            errorResponse.put("message", e.getMessage()); // Usamos el mensaje de la excepción.
+            return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+        }
     }
 }

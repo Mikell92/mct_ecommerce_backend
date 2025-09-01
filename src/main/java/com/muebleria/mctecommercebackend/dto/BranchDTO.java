@@ -16,15 +16,10 @@ public class BranchDTO {
     private String name;
 
     private String streetAddress;
-
     private String addressLine2;
-
     private String neighborhood;
-
     private String city;
-
     private String state;
-
     private String postalCode;
 
     private String phone;

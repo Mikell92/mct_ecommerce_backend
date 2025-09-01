@@ -7,12 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class JwtResponse {
-    private String token;
-    private String type = "Bearer"; // Tipo de token, por defecto "Bearer"
-    private Long userId;
+public class UserSummaryDTO {
+    private Long id;
+    private String fullName;
     private String username;
     private String role;
-    private String firstName;
-    private String lastName;
+    private boolean active;
+    private String managedBranchName;
 }

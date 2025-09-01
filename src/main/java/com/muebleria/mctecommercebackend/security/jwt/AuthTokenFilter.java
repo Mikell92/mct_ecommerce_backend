@@ -1,6 +1,9 @@
 package com.muebleria.mctecommercebackend.security.jwt;
 
+import com.muebleria.mctecommercebackend.model.User;
+import com.muebleria.mctecommercebackend.repository.UserRepository;
 import com.muebleria.mctecommercebackend.security.user.UserDetailsServiceImpl;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,17 +20,18 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.ZoneId;
+import java.util.Date;
 
-// Este filtro se ejecuta una vez por cada solicitud HTTP.
-// Intercepta la cabecera de autorización para extraer y validar el JWT.
 @Component
 public class AuthTokenFilter extends OncePerRequestFilter {
 
     @Autowired
     private JwtUtils jwtUtils;
-
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    @Autowired
+    private UserRepository userRepository; // Necesitamos el repositorio para buscar el usuario
 
     private static final Logger logger = LoggerFactory.getLogger(AuthTokenFilter.class);
 
@@ -35,38 +39,43 @@ public class AuthTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         try {
-            // 1. Obtener el token JWT de la cabecera de la solicitud
             String jwt = parseJwt(request);
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                // 2. Si el token es válido, obtener el nombre de usuario
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
-
-                // 3. Cargar los detalles del usuario
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // 4. Crear un objeto de autenticación
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                // --- INICIO DE LA LÓGICA DE VALIDACIÓN DE SESIÓN ---
+                User user = userRepository.findByUsername(username).orElse(null);
+                Claims claims = jwtUtils.getClaimsFromJwtToken(jwt); // Necesitamos un método para obtener los claims
+                Date issuedAt = claims.getIssuedAt();
 
-                // 5. Establecer la autenticación en el SecurityContextHolder
-                //    Esto indica a Spring Security que el usuario está autenticado para esta solicitud.
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // Si el token fue emitido ANTES del último cambio de contraseña, es inválido.
+                if (user != null && user.getPasswordChangedAt() != null &&
+                        issuedAt.before(Date.from(user.getPasswordChangedAt().atZone(ZoneId.systemDefault()).toInstant()))) {
+
+                    logger.warn("Token inválido para el usuario '{}' debido a un cambio de contraseña.", username);
+                    // Dejamos que la cadena continúe, pero sin autenticar al usuario.
+                    // Esto resultará en un 401 Unauthorized más adelante.
+                } else {
+                    // Si la validación es exitosa, procedemos a autenticar.
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+                // --- FIN DE LA LÓGICA DE VALIDACIÓN DE SESIÓN ---
             }
         } catch (Exception e) {
             logger.error("No se pudo establecer la autenticación del usuario: {}", e.getMessage());
         }
 
-        // Continuar con la cadena de filtros de seguridad
         filterChain.doFilter(request, response);
     }
 
-    // Extrae el token JWT de la cabecera "Authorization: Bearer <token>"
     private String parseJwt(HttpServletRequest request) {
         String headerAuth = request.getHeader("Authorization");
-
         if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            return headerAuth.substring(7); // Extrae el token después de "Bearer "
+            return headerAuth.substring(7);
         }
         return null;
     }

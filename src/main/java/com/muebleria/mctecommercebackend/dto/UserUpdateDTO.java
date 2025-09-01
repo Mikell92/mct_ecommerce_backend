@@ -6,7 +6,7 @@ import lombok.Data;
 public class UserUpdateDTO {
 
     private String role;
-    private boolean active;
-    private boolean bypassAccessRules;
+    private Boolean active;
+    private Boolean bypassAccessRules;
     private Long managedBranchId;
 }

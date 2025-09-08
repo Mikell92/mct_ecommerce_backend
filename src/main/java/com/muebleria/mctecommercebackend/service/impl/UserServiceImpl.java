@@ -249,9 +249,18 @@ public class UserServiceImpl implements UserService {
         }
 
         if (userUpdateDTO.getManagedBranchId() != null) {
-            Branch managedBranch = branchRepository.findById(userUpdateDTO.getManagedBranchId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada con ID: " + userUpdateDTO.getManagedBranchId()));
-            targetUser.setManagedBranch(managedBranch);
+            // Si el ID es diferente de null, procedemos a actualizar.
+
+            // Usamos el valor 0 como señal para desasignar (null). Es un "número mágico",
+            // pero resuelve la ambigüedad del null en un PATCH.
+            if (userUpdateDTO.getManagedBranchId() == 0L) {
+                targetUser.setManagedBranch(null);
+            } else {
+                // Si es cualquier otro número, buscamos y asignamos la sucursal.
+                Branch managedBranch = branchRepository.findById(userUpdateDTO.getManagedBranchId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Sucursal no encontrada con ID: " + userUpdateDTO.getManagedBranchId()));
+                targetUser.setManagedBranch(managedBranch);
+            }
         }
 
         targetUser.setUpdatedBy(currentUser);

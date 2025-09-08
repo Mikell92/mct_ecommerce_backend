@@ -1,6 +1,7 @@
 package com.muebleria.mctecommercebackend.service.impl;
 
 import com.muebleria.mctecommercebackend.dto.BranchDTO;
+import com.muebleria.mctecommercebackend.dto.BranchSummaryDTO;
 import com.muebleria.mctecommercebackend.exception.ResourceNotFoundException;
 import com.muebleria.mctecommercebackend.model.Branch;
 import com.muebleria.mctecommercebackend.model.User;
@@ -17,7 +18,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class BranchServiceImpl implements BranchService {
@@ -65,6 +68,14 @@ public class BranchServiceImpl implements BranchService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<BranchSummaryDTO> findAllSummaries() {
+        return branchRepository.findAll().stream()
+                .map(this::toSummaryDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public BranchDTO updateBranch(Long id, BranchDTO branchDTO) {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
@@ -93,6 +104,10 @@ public class BranchServiceImpl implements BranchService {
 
         branch.setDeletedBy(currentUser);
         branchRepository.delete(branch);
+    }
+
+    private BranchSummaryDTO toSummaryDTO(Branch branch) {
+        return new BranchSummaryDTO(branch.getId(), branch.getName());
     }
 
     private BranchDTO toDTO(Branch branch) {

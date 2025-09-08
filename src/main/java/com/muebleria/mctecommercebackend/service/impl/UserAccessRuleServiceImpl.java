@@ -40,9 +40,16 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
-        if (targetUser.isBypassAccessRules()) {
-            throw new IllegalArgumentException("No se pueden asignar horarios a este usuario porque tiene permiso para omitir las reglas de acceso.");
+        // --- INICIO DE LA VALIDACIÓN CORREGIDA ---
+        if (targetUser.isDeleted()) {
+            throw new AccessDeniedException("No se pueden gestionar las reglas de un usuario que ha sido eliminado.");
         }
+        // --- FIN DE LA VALIDACIÓN ---
+
+        if (targetUser.isBypassAccessRules()) {
+            targetUser.setBypassAccessRules(false);
+        }
+
         if (!canManageSchedules(currentUser, targetUser)) {
             throw new AccessDeniedException("No tienes permiso para gestionar los horarios de este usuario.");
         }
@@ -66,7 +73,6 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
     @Transactional(readOnly = true)
     public List<UserAccessRuleDTO> getRulesByUserId(Long userId) {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
-        // Usamos findById, que ahora puede encontrar usuarios eliminados, permitiendo la auditoría.
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
 
@@ -85,6 +91,12 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
         UserAccessRule rule = ruleRepository.findById(ruleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Regla no encontrada con ID: " + ruleId));
+
+        // --- INICIO DE LA VALIDACIÓN CORREGIDA ---
+        if (rule.getUser().isDeleted()) {
+            throw new AccessDeniedException("No se pueden gestionar las reglas de un usuario que ha sido eliminado.");
+        }
+        // --- FIN DE LA VALIDACIÓN ---
 
         if (!canManageSchedules(currentUser, rule.getUser())) {
             throw new AccessDeniedException("No tienes permiso para gestionar los horarios de este usuario.");
@@ -110,6 +122,12 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
         UserAccessRule rule = ruleRepository.findById(ruleId)
                 .orElseThrow(() -> new ResourceNotFoundException("Regla no encontrada con ID: " + ruleId));
+
+        // --- INICIO DE LA VALIDACIÓN CORREGIDA ---
+        if (rule.getUser().isDeleted()) {
+            throw new AccessDeniedException("No se pueden gestionar las reglas de un usuario que ha sido eliminado.");
+        }
+        // --- FIN DE LA VALIDACIÓN ---
 
         if (!canManageSchedules(currentUser, rule.getUser())) {
             throw new AccessDeniedException("No tienes permiso para gestionar los horarios de este usuario.");
@@ -139,7 +157,6 @@ public class UserAccessRuleServiceImpl implements UserAccessRuleService {
             return Optional.empty();
         }
         Long currentUserId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
-        // Usamos el findById que puede encontrar usuarios eliminados, para asegurar que la sesión es válida.
         return userRepository.findById(currentUserId);
     }
 

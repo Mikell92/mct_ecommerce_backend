@@ -1,6 +1,7 @@
 package com.muebleria.mctecommercebackend.controller;
 
 import com.muebleria.mctecommercebackend.dto.BranchDTO;
+import com.muebleria.mctecommercebackend.dto.BranchSummaryDTO;
 import com.muebleria.mctecommercebackend.exception.ResourceNotFoundException;
 import com.muebleria.mctecommercebackend.service.BranchService;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/branches")
@@ -43,6 +46,13 @@ public class BranchController {
     @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN', 'GESTOR_SUCURSAL', 'GESTOR_INVENTARIO')")
     public ResponseEntity<Page<BranchDTO>> getAllBranches(@PageableDefault(size = 10, sort = "name") Pageable pageable) {
         Page<BranchDTO> branches = branchService.findAll(pageable);
+        return ResponseEntity.ok(branches);
+    }
+
+    @GetMapping("/summary")
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN', 'GESTOR_SUCURSAL', 'GESTOR_INVENTARIO')")
+    public ResponseEntity<List<BranchSummaryDTO>> getAllBranchSummaries() {
+        List<BranchSummaryDTO> branches = branchService.findAllSummaries();
         return ResponseEntity.ok(branches);
     }
 

@@ -155,15 +155,19 @@ public class UserServiceImpl implements UserService {
     public Page<UserSummaryDTO> findAll(Pageable pageable, UserStatus status, String search, String role, Long branchId) {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
 
-        if (status == UserStatus.DELETED) {
-            if (currentUser.getRole() != Role.DEVELOPER) {
-                throw new AccessDeniedException("No tienes permiso para ver la lista de usuarios eliminados.");
-            }
-            return userRepository.findAllDeleted(pageable).map(this::toSummaryDTO);
+        // Comprobación de seguridad (sin cambios)
+        if (status == UserStatus.DELETED && currentUser.getRole() != Role.DEVELOPER) {
+            throw new AccessDeniedException("No tienes permiso para ver la lista de usuarios eliminados.");
         }
 
+        // --- INICIO DE LA LÓGICA UNIFICADA ---
+
         Specification<User> spec = (root, query, cb) -> cb.conjunction();
+
+        // Filtro para no incluir al usuario que hace la consulta
         spec = spec.and((root, query, cb) -> cb.notEqual(root.get("id"), currentUser.getId()));
+
+        // Filtro de jerarquía de roles (sin cambios)
         Role currentUserRole = currentUser.getRole();
         if (currentUserRole == Role.DEVELOPER) {
             spec = spec.and((root, query, cb) -> cb.notEqual(root.get("role"), Role.DEVELOPER));
@@ -171,11 +175,28 @@ public class UserServiceImpl implements UserService {
             spec = spec.and((root, query, cb) -> cb.notEqual(root.get("role"), Role.DEVELOPER));
             spec = spec.and((root, query, cb) -> cb.notEqual(root.get("role"), Role.ADMIN));
         }
-        if (status == UserStatus.ACTIVE) {
-            spec = spec.and((root, query, cb) -> cb.isTrue(root.get("active")));
-        } else if (status == UserStatus.INACTIVE) {
-            spec = spec.and((root, query, cb) -> cb.isFalse(root.get("active")));
+
+        // Filtro de estado (Status) - Ahora controla si se ven los eliminados o no
+        UserStatus finalStatus = (status == null) ? UserStatus.ACTIVE : status;
+
+        switch (finalStatus) {
+            case DELETED:
+                spec = spec.and((root, query, cb) -> cb.isTrue(root.get("isDeleted")));
+                break;
+            case ACTIVE:
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("isDeleted")));
+                spec = spec.and((root, query, cb) -> cb.isTrue(root.get("active")));
+                break;
+            case INACTIVE:
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("isDeleted")));
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("active")));
+                break;
+            case ALL:
+                spec = spec.and((root, query, cb) -> cb.isFalse(root.get("isDeleted")));
+                break;
         }
+
+        // A PARTIR DE AQUÍ, LOS FILTROS DE ROL Y BÚSQUEDA SE APLICAN A TODOS LOS CASOS
 
         if (search != null && !search.trim().isEmpty()) {
             String searchTerm = "%" + search.toLowerCase() + "%";

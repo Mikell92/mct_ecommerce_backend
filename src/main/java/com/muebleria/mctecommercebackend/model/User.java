@@ -14,7 +14,6 @@ import java.util.Set;
 @Setter
 @Entity
 @Table(name = "users")
-@Where(clause = "is_deleted = false")
 public class User {
 
     // --- Campos existentes (sin cambios) ---

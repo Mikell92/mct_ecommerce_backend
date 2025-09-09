@@ -538,13 +538,15 @@ public class UserServiceImpl implements UserService {
                 ? user.getManagedBranch().getName()
                 : null;
 
+        // --- LÍNEA A MODIFICAR ---
         return new UserSummaryDTO(
                 user.getId(),
                 fullName,
                 user.getUsername(),
                 user.getRole().name(),
                 user.isActive(),
-                branchName
+                branchName,
+                user.isDeleted()
         );
     }
     private UserProfileViewDTO toUserProfileViewDTO(User user) {

@@ -14,4 +14,5 @@ public class UserSummaryDTO {
     private String role;
     private boolean active;
     private String managedBranchName;
+    private boolean deleted;
 }

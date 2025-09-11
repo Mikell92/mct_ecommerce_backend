@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Data
@@ -17,12 +18,23 @@ public class UserProfileViewDTO {
     private boolean active;
     private boolean bypassAccessRules;
 
-    // --- ID y Nombre de la Sucursal ---
-    private Long managedBranchId;
+    // --- Nombre de la Sucursal ---
     private String managedBranchName;
 
     // --- Relaciones ---
     private UserDTO.ProfileInfo profile;
     private UserDTO.DriverInfo driverDetails;
-    private List<UserAccessRuleDTO> accessRules;
+
+    // DTO anidado AccessRuleProfileView.
+    private List<AccessRuleProfileView> accessRules;
+
+    @Data
+    public static class AccessRuleProfileView {
+        private Long id;
+        private String dayOfWeek;
+        private LocalTime startTime;
+        private LocalTime endTime;
+        private String accessTimezone;
+        private boolean active;
+    }
 }

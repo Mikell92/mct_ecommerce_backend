@@ -339,20 +339,11 @@ public class UserServiceImpl implements UserService {
         }
 
         // Lógica de actualización parcial: solo se actualizan los campos proporcionados
-        if (profileUpdateDTO.getFirstName() != null) {
-            profile.setFirstName(profileUpdateDTO.getFirstName());
-        }
-        if (profileUpdateDTO.getLastName() != null) {
-            profile.setLastName(profileUpdateDTO.getLastName());
-        }
         if (profileUpdateDTO.getEmail() != null) {
             profile.setEmail(profileUpdateDTO.getEmail());
         }
         if (profileUpdateDTO.getPhone() != null) {
             profile.setPhone(profileUpdateDTO.getPhone());
-        }
-        if (profileUpdateDTO.getAddress() != null) {
-            profile.setAddress(profileUpdateDTO.getAddress());
         }
 
         profile.setUpdatedBy(currentUser);
@@ -582,7 +573,6 @@ public class UserServiceImpl implements UserService {
         dto.setBypassAccessRules(user.isBypassAccessRules());
 
         if (user.getManagedBranch() != null) {
-            dto.setManagedBranchId(user.getManagedBranch().getId());
             dto.setManagedBranchName(user.getManagedBranch().getName());
         }
 
@@ -607,9 +597,21 @@ public class UserServiceImpl implements UserService {
         }
 
         dto.setAccessRules(user.getAccessRules() != null ?
-                user.getAccessRules().stream().map(this::toAccessRuleDTO).collect(Collectors.toList()) :
+                user.getAccessRules().stream().map(this::toAccessRuleProfileView).collect(Collectors.toList()) :
                 Collections.emptyList());
 
+        return dto;
+    }
+
+    private UserProfileViewDTO.AccessRuleProfileView toAccessRuleProfileView(UserAccessRule rule) {
+        if (rule == null) return null;
+        UserProfileViewDTO.AccessRuleProfileView dto = new UserProfileViewDTO.AccessRuleProfileView();
+        dto.setId(rule.getId());
+        dto.setDayOfWeek(rule.getDayOfWeek().toString());
+        dto.setStartTime(rule.getStartTime());
+        dto.setEndTime(rule.getEndTime());
+        dto.setAccessTimezone(rule.getAccessTimezone());
+        dto.setActive(rule.isActive());
         return dto;
     }
 

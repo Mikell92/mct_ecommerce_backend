@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(attributePaths = "managedBranch")
     Optional<User> findByUsername(String username);
 
+    boolean existsByUsername(String username);
+
     Page<User> findByIsDeletedFalse(Pageable pageable);
 
     Page<User> findByRoleNotAndIsDeletedFalse(Role role, Pageable pageable);

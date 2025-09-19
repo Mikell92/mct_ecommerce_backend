@@ -11,6 +11,8 @@ public interface UserService {
 
     UserDTO createUser(UserDTO userDTO);
 
+    boolean isUsernameTaken(String username);
+
     Optional<UserProfileViewDTO> findMyProfileById(Long id);
 
     Optional<UserDTO> findById(Long id);

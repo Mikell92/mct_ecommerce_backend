@@ -18,6 +18,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -62,6 +64,12 @@ public class UserController {
         UserDTO userDTO = userService.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
         return ResponseEntity.ok(userDTO);
+    }
+
+    @GetMapping("/check-username")
+    public ResponseEntity<Map<String, Boolean>> checkUsername(@RequestParam String username) {
+        boolean isTaken = userService.isUsernameTaken(username);
+        return ResponseEntity.ok(Map.of("isTaken", isTaken));
     }
 
     @GetMapping("/me")

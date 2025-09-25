@@ -124,15 +124,21 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Optional<UserDTO> findById(Long id) {
         User currentUser = getCurrentUserEntity().orElseThrow(() -> new IllegalStateException("Usuario actual no identificado."));
-        Optional<User> targetUserOpt = userRepository.findById(id);
 
-        targetUserOpt.ifPresent(targetUser -> {
-            if (!canRead(currentUser, targetUser)) {
-                throw new AccessDeniedException("No tienes permiso para ver este usuario.");
+        User targetUser = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + id));
+
+        if (targetUser.isDeleted()) {
+            if (currentUser.getRole() != Role.DEVELOPER) {
+                throw new ResourceNotFoundException("Usuario no encontrado con ID: " + id);
             }
-        });
+        }
 
-        return targetUserOpt.map(this::toDTO);
+        if (!canRead(currentUser, targetUser)) {
+            throw new AccessDeniedException("No tienes permiso para ver este usuario.");
+        }
+
+        return Optional.of(toDTO(targetUser));
     }
 
     @Override

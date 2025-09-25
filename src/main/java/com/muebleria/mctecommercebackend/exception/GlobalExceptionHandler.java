@@ -106,7 +106,6 @@ public class GlobalExceptionHandler {
         Map<String, String> error = new HashMap<>();
         error.put("error", "Acceso Denegado");
         error.put("message", ex.getMessage());
-        error.put("path", request.getDescription(false).replace("uri=", "")); // Elimina "uri="
         return error;
     }
 
